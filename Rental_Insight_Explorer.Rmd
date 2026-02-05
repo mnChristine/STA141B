@@ -1,0 +1,107 @@
+---
+title: "Rental Insight Explorer"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(tidyverse)
+library(crosstalk)
+library(htmlwidgets)
+library(htmltools)
+library(leaflet)
+library(ggthemes)
+library(plotly)
+library(DT)
+library(ggpubr)
+```
+
+
+```{r}
+data <- readRDS("SacramentoData_June3.rds")
+rownames(data) <- NULL
+data %>% 
+  gather(key = "Description", value = "Value", -pid) %>% 
+  filter(!(Description %in% c("body"))) -> data.lng
+
+shared.data <- SharedData$new(data, ~pid, group = "choose_unit")
+shared.data2 <- SharedData$new(data.lng, ~pid, group = "choose_unit")
+```
+
+```{r}
+shared.data %>% 
+  ggplot() + 
+  geom_point(aes(x = longitude, y = latitude), size = 3, alpha = 0.6, color = "darkgreen") + 
+  theme_pander() + 
+  xlab("") + 
+  ylab("") + 
+  theme(panel.background = element_rect(fill = "#BFD5E3", colour = "#6D9EC1",
+                                        size = 1, linetype = "solid")) + 
+  xlab("Longitude") + 
+  ylab("Latitude") -> p1
+```
+
+```{r}
+shared.data %>% 
+  ggplot() + 
+  geom_point(aes(x = sqft, y = price, color = type), size = 3, alpha = 0.8) + 
+  theme_pander() + 
+  xlab("Square Footage") + 
+  ylab("Price") + 
+  theme(legend.position = "right") + 
+  labs(color = "Type") -> p2
+```
+
+Column {data-width=250}
+-----------------------------------------------------------------------
+
+### Introduction
+
+Welcome to our interactive rental property explorer! This page is designed to provide you with a comprehensive view of rental units through three main interactive elements: a map, a scatter plot, and a detailed information table.
+
+Map Overview: Our map is your gateway to exploring all available rental units. Each point represents a property, ready to be discovered.
+
+Scatter Plot Analysis: The scatter plot offers a visual representation of the relationship between rental price and square footage, giving you a quick insight into the value and size of each unit.
+
+Detailed Information Table: For an in-depth look, select a point on the map, and the corresponding data point on the scatter plot will be highlighted. The table on the right side panel will then display extensive details about the selected rental unit.
+
+Example Walkthrough: To demonstrate, let's say you're intrigued by a property in the southwest corner of the map. With a single click, you'll see that this apartment is priced at $2,049 with 880 square feet of living space. The scatter plot indicates that it falls within a medium price range and size category. The side panel table will then reveal more about this unit, such as the number of bedrooms, air conditioning specifications, pet policy, and the exact street address.
+
+
+Column {data-width=650}
+-----------------------------------------------------------------------
+
+### Map {data-width=600}
+
+```{r}
+p1 %>% ggplotly()
+```
+
+### Relationship between Price and Square Footage
+
+```{r}
+p2 %>% ggplotly()
+```
+
+Column {data-width=350}
+-----------------------------------------------------------------------
+
+### Detailed Information {data-width=400}
+
+```{r}
+datatable(shared.data2, options = list(autowidth = TRUE))
+```
+
+
+
+
+
+
+
+
+
+
+
